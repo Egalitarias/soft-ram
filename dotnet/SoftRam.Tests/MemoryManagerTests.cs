@@ -1,3 +1,4 @@
+using System.Security.Principal;
 using SoftRam.Core;
 using Xunit;
 
@@ -67,5 +68,59 @@ public class MemoryManagerTests
         // Succeeds only when elevated; either result is valid, it must just return.
         var ex = Record.Exception(() => MemoryManager.PurgeStandbyList());
         Assert.Null(ex);
+    }
+
+    [Fact]
+    public void PurgeFailsWithoutAdministrator()
+    {
+        using var identity = WindowsIdentity.GetCurrent();
+        bool isAdmin = new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
+
+        bool purged = MemoryManager.PurgeStandbyList();
+
+        if (!isAdmin) Assert.False(purged);
+    }
+
+    [Fact]
+    public void TotalsAreStableBetweenCalls()
+    {
+        var a = MemoryManager.GetStats();
+        var b = MemoryManager.GetStats();
+
+        Assert.Equal(a.TotalPhys, b.TotalPhys);
+    }
+
+    [Fact]
+    public void LoadPercentMatchesUsage()
+    {
+        var s = MemoryManager.GetStats();
+
+        double used = (double)(s.TotalPhys - s.AvailPhys) / s.TotalPhys * 100;
+
+        Assert.InRange(s.LoadPercent, used - 5, used + 5);
+    }
+
+    [Fact]
+    public void CurrentProcessWorkingSetIsNonZero()
+    {
+        Assert.True(MemoryManager.CurrentProcessWorkingSet() > 0);
+    }
+
+    [Fact]
+    public void TrimCountsEveryOpenedOrSkippedProcess()
+    {
+        var result = MemoryManager.TrimWorkingSets();
+
+        Assert.True(result.ProcessesTrimmed + result.ProcessesSkipped > 1);
+    }
+
+    [Fact]
+    public void TrimCanBeRepeated()
+    {
+        var first = MemoryManager.TrimWorkingSets();
+        var second = MemoryManager.TrimWorkingSets();
+
+        Assert.True(first.ProcessesTrimmed >= 1);
+        Assert.True(second.ProcessesTrimmed >= 1);
     }
 }
