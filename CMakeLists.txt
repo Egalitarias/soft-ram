@@ -5,18 +5,27 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable(SoftRam WIN32
-    src/main.cpp
-    src/memory.cpp
-    src/memory.h
-)
+add_library(softram_memory STATIC src/memory.cpp src/memory.h)
+target_include_directories(softram_memory PUBLIC src)
+target_compile_definitions(softram_memory PUBLIC UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
+target_link_libraries(softram_memory PUBLIC psapi advapi32)
 
-target_compile_definitions(SoftRam PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_link_libraries(SoftRam PRIVATE psapi shell32 user32 gdi32 advapi32)
+add_executable(SoftRam WIN32 src/main.cpp)
+target_link_libraries(SoftRam PRIVATE softram_memory shell32 user32 gdi32)
 
 if(MSVC)
-    target_compile_options(SoftRam PRIVATE /W4 /permissive-)
+    set(SOFTRAM_WARNINGS /W4 /permissive-)
 else()
-    target_compile_options(SoftRam PRIVATE -Wall -Wextra)
+    set(SOFTRAM_WARNINGS -Wall -Wextra)
     target_link_options(SoftRam PRIVATE -municode)
+endif()
+target_compile_options(softram_memory PRIVATE ${SOFTRAM_WARNINGS})
+target_compile_options(SoftRam PRIVATE ${SOFTRAM_WARNINGS})
+
+include(CTest)
+if(BUILD_TESTING)
+    add_executable(memory_tests tests/memory_tests.cpp)
+    target_link_libraries(memory_tests PRIVATE softram_memory)
+    target_compile_options(memory_tests PRIVATE ${SOFTRAM_WARNINGS})
+    add_test(NAME memory_tests COMMAND memory_tests)
 endif()
