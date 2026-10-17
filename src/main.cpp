@@ -62,6 +62,9 @@ void DrawBar(HDC dc, int x, int y, int w, int h, unsigned percent, const wchar_t
 void Paint(HWND hwnd) {
     PAINTSTRUCT ps;
     HDC dc = BeginPaint(hwnd, &ps);
+    RECT client;
+    GetClientRect(hwnd, &client);
+    FillRect(dc, &client, GetSysColorBrush(COLOR_BTNFACE));  // erase last tick's text
     SelectObject(dc, GetStockObject(DEFAULT_GUI_FONT));
     SetBkMode(dc, TRANSPARENT);
 
@@ -200,7 +203,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int show) {
     wc.hIcon = LoadIconW(nullptr, IDI_APPLICATION);
     if (!RegisterClassExW(&wc)) return 1;
 
-    HWND hwnd = CreateWindowExW(0, kClassName, L"SoftRam", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+    HWND hwnd = CreateWindowExW(0, kClassName, L"SoftRam", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_CLIPCHILDREN,
                                 CW_USEDEFAULT, CW_USEDEFAULT, 416, 290, nullptr, nullptr, inst,
                                 nullptr);
     if (!hwnd) return 1;

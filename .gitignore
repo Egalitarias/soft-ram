@@ -3,3 +3,5 @@ out/
 .vs/
 *.user
 CMakeUserPresets.json
+bin/
+obj/
