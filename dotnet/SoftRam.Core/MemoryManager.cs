@@ -76,6 +76,28 @@ public static class MemoryManager
             NativeMethods.SystemMemoryListInformation, ref command, sizeof(int)) >= 0;
     }
 
+    /// <summary>
+    /// Size of Windows' own compressed memory store (the "Memory Compression" process working set),
+    /// in bytes. Returns 0 if the store is not present or not readable.
+    /// </summary>
+    public static ulong CompressedStoreBytes()
+    {
+        foreach (var name in new[] { "Memory Compression", "MemCompression" })
+        {
+            foreach (var process in Process.GetProcessesByName(name))
+            {
+                using (process)
+                {
+                    var handle = NativeMethods.OpenProcess(NativeMethods.ProcessQueryInformation, false, (uint)process.Id);
+                    if (handle == IntPtr.Zero) continue;
+                    try { return WorkingSetBytes(handle); }
+                    finally { NativeMethods.CloseHandle(handle); }
+                }
+            }
+        }
+        return 0;
+    }
+
     /// <summary>Working set of the current process, in bytes.</summary>
     public static ulong CurrentProcessWorkingSet() => WorkingSetBytes(NativeMethods.GetCurrentProcess());
 

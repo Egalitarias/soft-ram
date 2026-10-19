@@ -2,10 +2,13 @@
 
 A small Windows tray utility that monitors memory and reclaims idle pages. There are two implementations of the same app: C++17 with the plain Win32 API, and C# on .NET 9 with WinForms.
 
+SoftRam follows the workflow of the 1995 [SoftRAM](https://en.wikipedia.org/wiki/SoftRAM) (an always-on memory utility with live gauges and an on/off switch), but honestly.
+
 **It does not add RAM.** Windows 10/11 already compresses memory itself, and the original 1990s "SoftRAM" claimed to double memory and didn't. SoftRam here only:
 
 - shows physical memory and commit charge live (`GlobalMemoryStatusEx`)
 - trims process working sets (`EmptyWorkingSet`), manually or automatically above 85% load
+- shows the size of Windows' own compressed memory store (.NET version)
 - optionally purges the standby list (`NtSetSystemInformation`, needs administrator)
 
 Trimming moves idle pages out of RAM; apps fault them back in when needed, so it can make things slower. Use it to free memory for a big task, not as a permanent fix.

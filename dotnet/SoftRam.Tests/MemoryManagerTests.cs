@@ -123,4 +123,11 @@ public class MemoryManagerTests
         Assert.True(first.ProcessesTrimmed >= 1);
         Assert.True(second.ProcessesTrimmed >= 1);
     }
+
+    [Fact]
+    public void CompressedStoreIsReadable()
+    {
+        // 0 is valid (store absent or access denied); it must never throw or exceed physical RAM.
+        Assert.True(MemoryManager.CompressedStoreBytes() <= MemoryManager.GetStats().TotalPhys);
+    }
 }
